@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -26,14 +26,5 @@
     "eslint": "^9",
     "eslint-config-next": "15.1.1",
     "@eslint/eslintrc": "^3"
-  },
-  "lint-staged": {
-    "src/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "src/**/*.{css,md}": [
-      "prettier --write"
-    ]
   }
 }

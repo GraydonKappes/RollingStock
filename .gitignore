@@ -39,3 +39,37 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Local files
+*.local
+.env*.local
+
+# Logs
+logs
+*.log
+
+# Cache
+.eslintcache
+.stylelintcache
+
+# Database
+*.sqlite
+*.sqlite3
+/prisma/migrations/
+/prisma/*.db
+
+# Backups
+*.bak
+*.backup
+*.dump
+
+# Environment variables
+.env.development
+.env.production
+.env.local
