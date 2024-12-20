@@ -11,7 +11,14 @@ export async function GET(request: Request) {
   
   try {
     console.log('Health check: Starting database test')
-    const result = await sql`SELECT NOW() as time, version() as version`
+    const result = await sql`
+      SELECT 
+        NOW() as time,
+        version() as version,
+        current_database() as database,
+        current_user as user,
+        inet_server_addr() as server_addr
+    `
     console.log('Health check: Database test successful', result)
     
     return NextResponse.json({ 
@@ -19,7 +26,10 @@ export async function GET(request: Request) {
       database: {
         connected: true,
         time: result[0].time,
-        version: result[0].version
+        version: result[0].version,
+        name: result[0].database,
+        user: result[0].user,
+        server: result[0].server_addr
       },
       request: {
         url: requestUrl.toString(),
