@@ -248,3 +248,56 @@ export async function deleteProject(id: number) {
   `
   return id
 } 
+
+export async function assignVehicleToProject(vehicleId: number, projectId: number) {
+  try {
+    const result = await sql`
+      INSERT INTO project_assignments (vehicle_id, project_id)
+      VALUES (${vehicleId}, ${projectId})
+      RETURNING id
+    `
+    return result[0].id
+  } catch (error) {
+    console.error('Failed to assign vehicle to project:', error)
+    throw error
+  }
+}
+
+export async function unassignVehicleFromProject(vehicleId: number, projectId: number) {
+  try {
+    await sql`
+      DELETE FROM project_assignments
+      WHERE vehicle_id = ${vehicleId} AND project_id = ${projectId}
+    `
+  } catch (error) {
+    console.error('Failed to unassign vehicle from project:', error)
+    throw error
+  }
+}
+
+export async function getAvailableVehicles(projectId: number): Promise<Vehicle[]> {
+  const rows = await sql`
+    SELECT v.*
+    FROM vehicles v
+    WHERE v.status = 'active'
+    AND NOT EXISTS (
+      SELECT 1 
+      FROM project_assignments pa
+      WHERE pa.vehicle_id = v.id
+      AND pa.project_id = ${projectId}
+    )
+  `
+  
+  return rows.map(row => ({
+    id: row.id,
+    vin: row.vin,
+    make: row.make,
+    model: row.model,
+    year: row.year,
+    status: row.status as VehicleStatus,
+    category: row.category,
+    imageUrl: row.image_url,
+    createdAt: new Date(row.created_at),
+    assignments: []
+  }))
+} 
