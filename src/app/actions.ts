@@ -2,6 +2,7 @@
 
 import { sql } from '@/lib/db'
 import { Vehicle, VehicleStatus, ProjectStatus } from '@/types/vehicle'
+import { Project } from '@/types/project'
 
 export async function getVehicles(): Promise<Vehicle[]> {
   const rows = await sql`
@@ -148,4 +149,86 @@ export async function getVehicleById(id: number): Promise<Vehicle | null> {
       }
     }))
   }
+} 
+
+export async function getProjects(): Promise<Project[]> {
+  try {
+    // Simple query first to verify data exists
+    const checkProjects = await sql`
+      SELECT COUNT(*) as count FROM projects
+    `
+    console.log('Project count:', checkProjects[0].count)
+
+    // Basic query without joins to verify project data
+    const rows = await sql`
+      SELECT 
+        p.id,
+        p.name,
+        p.location,
+        p.status::text as status,
+        p.created_at,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', v.id,
+                'make', v.make,
+                'model', v.model,
+                'year', v.year,
+                'status', v.status
+              )
+            )
+            FROM project_assignments pa
+            JOIN vehicles v ON pa.vehicle_id = v.id
+            WHERE pa.project_id = p.id
+          ),
+          '[]'::json
+        ) as vehicles
+      FROM projects p
+      ORDER BY p.created_at DESC
+    `
+    console.log('Basic projects query result:', JSON.stringify(rows, null, 2))
+
+    return rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      location: row.location,
+      status: row.status as ProjectStatus,
+      createdAt: new Date(row.created_at),
+      vehicles: row.vehicles || []
+    }))
+  } catch (error) {
+    console.error('Database error in getProjects:', error)
+    throw error
+  }
+}
+
+export async function createProject(data: Omit<Project, 'id' | 'createdAt' | 'vehicles'>) {
+  const result = await sql`
+    INSERT INTO projects (name, location, status)
+    VALUES (${data.name}, ${data.location}, ${data.status})
+    RETURNING id
+  `
+  return result[0].id
+}
+
+export async function updateProject(id: number, data: Partial<Omit<Project, 'id' | 'createdAt' | 'vehicles'>>) {
+  const result = await sql`
+    UPDATE projects 
+    SET
+      name = ${data.name},
+      location = ${data.location},
+      status = ${data.status}
+    WHERE id = ${id}
+    RETURNING id
+  `
+  return result[0].id
+}
+
+export async function deleteProject(id: number) {
+  await sql`
+    DELETE FROM projects
+    WHERE id = ${id}
+  `
+  return id
 } 
