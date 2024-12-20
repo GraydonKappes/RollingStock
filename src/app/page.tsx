@@ -1,3 +1,8 @@
+'use client'
+
+import { Suspense } from 'react'
+import Error from './error'
+
 export const dynamic = 'force-dynamic'
 
 export default function Home() {
