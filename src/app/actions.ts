@@ -3,8 +3,7 @@
 import { sql } from '@/lib/db'
 import { Vehicle, VehicleStatus, ProjectStatus } from '@/types/vehicle'
 import { Project } from '@/types/project'
-import { unlink } from 'fs/promises'
-import path from 'path'
+import { del } from '@vercel/blob'
 
 interface ProjectAssignment {
   project: {
@@ -20,8 +19,7 @@ async function deleteImageFile(imageUrl: string | null) {
   if (!imageUrl) return
   
   try {
-    const imagePath = path.join(process.cwd(), 'public', imageUrl)
-    await unlink(imagePath)
+    await del(imageUrl)
   } catch (error) {
     console.error('Failed to delete image file:', error)
   }
