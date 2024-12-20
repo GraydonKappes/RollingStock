@@ -5,6 +5,18 @@ export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    },
+  })
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const headers = new Headers(request.headers)
@@ -17,7 +29,8 @@ export async function GET(request: Request) {
         version() as version,
         current_database() as database,
         current_user as user,
-        inet_server_addr() as server_addr
+        inet_server_addr() as server_addr,
+        pg_backend_pid() as backend_pid
     `
     console.log('Health check: Database test successful', result)
     
@@ -29,7 +42,8 @@ export async function GET(request: Request) {
         version: result[0].version,
         name: result[0].database,
         user: result[0].user,
-        server: result[0].server_addr
+        server: result[0].server_addr,
+        pid: result[0].backend_pid
       },
       request: {
         url: requestUrl.toString(),
@@ -42,6 +56,8 @@ export async function GET(request: Request) {
     }, {
       headers: {
         'Cache-Control': 'no-store, max-age=0',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
       }
     })
   } catch (error) {
@@ -61,6 +77,8 @@ export async function GET(request: Request) {
       status: 500,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
       }
     })
   }
