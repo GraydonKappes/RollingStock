@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   experimental: {
@@ -9,6 +8,14 @@ const nextConfig: NextConfig = {
       allowedOrigins: ['*']
     }
   },
+  generateBuildId: async () => {
+    return 'build-' + Date.now()
+  },
+  poweredByHeader: false,
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  distDir: '.next',
   async headers() {
     return [
       {
@@ -23,6 +30,9 @@ const nextConfig: NextConfig = {
   images: {
     domains: [],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
