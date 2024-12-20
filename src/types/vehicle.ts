@@ -1,4 +1,4 @@
-import { vehicle_status } from '@prisma/client'
+export type VehicleStatus = 'active' | 'maintenance' | 'retired' | null
 
 export type Vehicle = {
   id: number
@@ -6,7 +6,7 @@ export type Vehicle = {
   make: string
   model: string
   year: number
-  status: vehicle_status | null
+  status: VehicleStatus
   category: string
   imageUrl?: string | null
   assignments: {
