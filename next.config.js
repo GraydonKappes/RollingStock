@@ -2,10 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-      allowedOrigins: ['*']
-    }
+    serverActions: true
   },
   generateBuildId: async () => {
     return 'build-' + Date.now()
@@ -31,6 +28,11 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
   },
 };
 
