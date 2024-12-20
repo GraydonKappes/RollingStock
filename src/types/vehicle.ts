@@ -1,4 +1,5 @@
-export type VehicleStatus = 'active' | 'maintenance' | 'retired' | null
+export type VehicleStatus = 'active' | 'maintenance' | 'retired'
+export type ProjectStatus = 'active' | 'completed'
 
 export type Vehicle = {
   id: number
@@ -9,13 +10,14 @@ export type Vehicle = {
   status: VehicleStatus
   category: string
   imageUrl?: string | null
+  createdAt: Date
   assignments: {
     project: {
       id: number
       name: string
       location: string
-      status: string
-      createdAt: Date | null
+      status: ProjectStatus
+      createdAt: Date
     }
   }[]
 } 
