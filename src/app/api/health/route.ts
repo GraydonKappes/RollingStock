@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { sql } from '@/lib/db'
 
+// Segment Configuration
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const preferredRegion = 'iad1'
+export const maxDuration = 10
 
-// Handle preflight requests
 export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
     status: 204,
@@ -18,19 +19,13 @@ export async function OPTIONS(request: Request) {
   })
 }
 
-// Handle GET requests
 export async function GET(request: Request) {
-  // Ensure we're actually hitting this route
   console.log('Health check route hit:', request.url)
   
   const requestUrl = new URL(request.url)
   const headers = new Headers(request.headers)
   
   try {
-    console.log('Health check: Starting database test')
-    const testResult = await sql`SELECT 1 as test`
-    console.log('Initial connection test:', testResult)
-
     const result = await sql`
       SELECT 
         NOW() as time,
@@ -40,9 +35,7 @@ export async function GET(request: Request) {
         inet_server_addr() as server_addr,
         pg_backend_pid() as backend_pid
     `
-    console.log('Health check: Database test successful', result)
     
-    // Return success response
     return new NextResponse(
       JSON.stringify({
         status: 'ok',
@@ -76,20 +69,14 @@ export async function GET(request: Request) {
     )
   } catch (error) {
     console.error('Health check failed:', error)
-    
-    // Return error response
     return new NextResponse(
       JSON.stringify({
         status: 'error',
         message: error instanceof Error ? error.message : 'Unknown error',
         request: {
           url: requestUrl.toString(),
-          host: requestUrl.host,
-          originalUrl: headers.get('x-url'),
-          hostname: headers.get('x-hostname')
-        },
-        env: process.env.NODE_ENV,
-        timestamp: new Date().toISOString()
+          host: requestUrl.host
+        }
       }),
       {
         status: 500,
