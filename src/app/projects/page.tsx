@@ -258,9 +258,9 @@ export default function ProjectsPage() {
 
       {/* Modal for Create/Edit Form */}
       {(isFormOpen || editingProject) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>
               {editingProject ? 'Edit Project' : 'Add New Project'}
             </h2>
             <ProjectForm

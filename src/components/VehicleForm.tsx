@@ -26,96 +26,98 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }: Vehicle
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium mb-1">VIN</label>
-        <input
-          type="text"
-          value={formData.vin}
-          onChange={(e) => setFormData(prev => ({ ...prev, vin: e.target.value }))}
-          className="w-full p-2 border rounded"
-          required
-        />
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-h-[80vh] overflow-y-auto">
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">VIN</label>
+          <input
+            type="text"
+            value={formData.vin}
+            onChange={(e) => setFormData(prev => ({ ...prev, vin: e.target.value }))}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Make</label>
+          <input
+            type="text"
+            value={formData.make}
+            onChange={(e) => setFormData(prev => ({ ...prev, make: e.target.value }))}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Model</label>
+          <input
+            type="text"
+            value={formData.model}
+            onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Year</label>
+          <input
+            type="number"
+            value={formData.year}
+            onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) }))}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Status</label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as VehicleStatus }))}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          >
+            <option value="active">Active</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="retired">Retired</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Category</label>
+          <input
+            type="text"
+            value={formData.category}
+            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Image URL</label>
+          <input
+            type="url"
+            value={formData.imageUrl || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          />
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Make</label>
-        <input
-          type="text"
-          value={formData.make}
-          onChange={(e) => setFormData(prev => ({ ...prev, make: e.target.value }))}
-          className="w-full p-2 border rounded"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Model</label>
-        <input
-          type="text"
-          value={formData.model}
-          onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
-          className="w-full p-2 border rounded"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Year</label>
-        <input
-          type="number"
-          value={formData.year}
-          onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-          className="w-full p-2 border rounded"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Status</label>
-        <select
-          value={formData.status}
-          onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as VehicleStatus }))}
-          className="w-full p-2 border rounded"
-        >
-          <option value="active">Active</option>
-          <option value="maintenance">Maintenance</option>
-          <option value="retired">Retired</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Category</label>
-        <input
-          type="text"
-          value={formData.category}
-          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-          className="w-full p-2 border rounded"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Image URL</label>
-        <input
-          type="url"
-          value={formData.imageUrl || ''}
-          onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-          className="w-full p-2 border rounded"
-        />
-      </div>
-
-      <div className="flex justify-end space-x-4">
+      <div className="flex justify-end gap-2 mt-6 pt-4 border-t dark:border-gray-700">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border rounded hover:bg-gray-100"
+          className="px-4 py-2 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           {initialData ? 'Update' : 'Create'} Vehicle
         </button>

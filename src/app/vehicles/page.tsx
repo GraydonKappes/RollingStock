@@ -70,21 +70,11 @@ export default function VehiclesPage() {
     <div className="container">
       <div className={styles.tableContainer}>
         <div className="flex justify-between items-center mb-6">
-          <div className={styles.viewToggle}>
-            <button 
-              className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
-              onClick={() => setViewMode('grid')}
-            >
-              Grid View
-            </button>
-            <button 
-              className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              List View
-            </button>
-          </div>
-          <button onClick={() => setIsFormOpen(true)} className={styles.buttonPrimary}>
+          <h1 className="text-2xl font-bold">Vehicles</h1>
+          <button 
+            onClick={() => setIsFormOpen(true)} 
+            className="btn btn-primary"
+          >
             Add Vehicle
           </button>
         </div>
@@ -174,11 +164,11 @@ export default function VehiclesPage() {
         )}
       </div>
       
-      {/* Modal for Create/Edit Form */}
+      {/* Modal Form */}
       {(isFormOpen || editingVehicle) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>
               {editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
             </h2>
             <VehicleForm
