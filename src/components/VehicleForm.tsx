@@ -2,14 +2,23 @@
 
 import { useState, useRef } from 'react'
 import { Vehicle, VehicleStatus } from '@/types/vehicle'
+import { Project } from '@/types/project'
 
 type VehicleFormProps = {
   initialData?: Partial<Vehicle>
   onSubmit: (data: Omit<Vehicle, 'id' | 'createdAt' | 'assignments'>) => Promise<void>
   onCancel: () => void
+  onAssignToProject?: (projectId: number) => Promise<void>
+  availableProjects?: Project[]
 }
 
-export default function VehicleForm({ initialData, onSubmit, onCancel }: VehicleFormProps) {
+export default function VehicleForm({ 
+  initialData, 
+  onSubmit, 
+  onCancel,
+  onAssignToProject,
+  availableProjects
+}: VehicleFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null)
   const [formData, setFormData] = useState({
@@ -177,6 +186,54 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }: Vehicle
             </div>
           </div>
         </div>
+
+        {initialData?.id && availableProjects && onAssignToProject && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Assign to Project</label>
+            <div className="flex gap-2">
+              <select
+                className="flex-1 p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                onChange={(e) => {
+                  const projectId = parseInt(e.target.value)
+                  if (projectId) {
+                    onAssignToProject(projectId)
+                  }
+                }}
+                defaultValue=""
+              >
+                <option value="">Select a project...</option>
+                {availableProjects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name} ({project.location})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {initialData?.assignments && initialData.assignments.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Current Assignment</label>
+            <div className="space-y-2">
+              {initialData.assignments.map((assignment) => (
+                <div 
+                  key={assignment.project.id}
+                  className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded"
+                >
+                  <span>
+                    {assignment.project.name} ({assignment.project.location})
+                  </span>
+                  <span className={`px-2 py-1 text-xs rounded ${
+                    assignment.project.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {assignment.project.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 mt-6 pt-4 border-t dark:border-gray-700">

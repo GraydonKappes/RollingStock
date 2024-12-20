@@ -4,9 +4,10 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { Vehicle } from '@/types/vehicle'
-import { getVehicles, createVehicle, updateVehicle, deleteVehicle } from '@/app/actions'
+import { getVehicles, createVehicle, updateVehicle, deleteVehicle, getProjects, assignVehicleToProject } from '@/app/actions'
 import VehicleForm from '@/components/VehicleForm'
 import styles from '@/styles/Table.module.css'
+import { Project } from '@/types/project'
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -14,10 +15,16 @@ export default function VehiclesPage() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [availableProjects, setAvailableProjects] = useState<Project[]>([])
 
   // Load vehicles on mount
   useEffect(() => {
     loadVehicles()
+  }, [])
+
+  // Add this effect to load projects
+  useEffect(() => {
+    loadProjects()
   }, [])
 
   async function loadVehicles() {
@@ -28,6 +35,15 @@ export default function VehiclesPage() {
       console.error('Failed to load vehicles:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function loadProjects() {
+    try {
+      const data = await getProjects()
+      setAvailableProjects(data)
+    } catch (error) {
+      console.error('Failed to load projects:', error)
     }
   }
 
@@ -59,6 +75,17 @@ export default function VehiclesPage() {
       await loadVehicles()
     } catch (error) {
       console.error('Failed to delete vehicle:', error)
+    }
+  }
+
+  const handleAssignToProject = async (vehicleId: number, projectId: number) => {
+    try {
+      await assignVehicleToProject(vehicleId, projectId)
+      await loadVehicles() // Reload to show updated assignments
+      setEditingVehicle(null) // Close the modal
+    } catch (error) {
+      console.error('Failed to assign vehicle to project:', error)
+      alert('Failed to assign vehicle to project')
     }
   }
 
@@ -187,6 +214,12 @@ export default function VehiclesPage() {
                 setIsFormOpen(false)
                 setEditingVehicle(null)
               }}
+              availableProjects={availableProjects}
+              onAssignToProject={
+                editingVehicle 
+                  ? (projectId) => handleAssignToProject(editingVehicle.id, projectId)
+                  : undefined
+              }
             />
           </div>
         </div>
