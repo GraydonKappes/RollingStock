@@ -1,12 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    serverActions: true
-  },
-  generateBuildId: async () => {
-    return 'build-' + Date.now()
-  },
   poweredByHeader: false,
   typescript: {
     ignoreBuildErrors: false,
