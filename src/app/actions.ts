@@ -3,6 +3,8 @@
 import { sql } from '@/lib/db'
 import { Vehicle, VehicleStatus, ProjectStatus } from '@/types/vehicle'
 import { Project } from '@/types/project'
+import { unlink } from 'fs/promises'
+import path from 'path'
 
 interface ProjectAssignment {
   project: {
@@ -11,6 +13,17 @@ interface ProjectAssignment {
     location: string;
     status: ProjectStatus;
     createdAt: string | Date;
+  }
+}
+
+async function deleteImageFile(imageUrl: string | null) {
+  if (!imageUrl) return
+  
+  try {
+    const imagePath = path.join(process.cwd(), 'public', imageUrl)
+    await unlink(imagePath)
+  } catch (error) {
+    console.error('Failed to delete image file:', error)
   }
 }
 
@@ -89,6 +102,8 @@ export async function createVehicle(data: Omit<Vehicle, 'id' | 'createdAt' | 'as
 }
 
 export async function updateVehicle(id: number, data: Partial<Omit<Vehicle, 'id' | 'createdAt' | 'assignments'>>) {
+  const currentVehicle = await getVehicleById(id)
+  
   const result = await sql`
     UPDATE vehicles 
     SET
@@ -102,14 +117,26 @@ export async function updateVehicle(id: number, data: Partial<Omit<Vehicle, 'id'
     WHERE id = ${id}
     RETURNING id
   `
+  
+  if (currentVehicle?.imageUrl && currentVehicle.imageUrl !== data.imageUrl) {
+    await deleteImageFile(currentVehicle.imageUrl)
+  }
+  
   return result[0].id
 }
 
 export async function deleteVehicle(id: number) {
+  const vehicle = await getVehicleById(id)
+  
   await sql`
     DELETE FROM vehicles
     WHERE id = ${id}
   `
+  
+  if (vehicle?.imageUrl) {
+    await deleteImageFile(vehicle.imageUrl)
+  }
+  
   return id
 }
 

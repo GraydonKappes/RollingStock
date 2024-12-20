@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Vehicle, VehicleStatus } from '@/types/vehicle'
 
 type VehicleFormProps = {
@@ -10,6 +10,8 @@ type VehicleFormProps = {
 }
 
 export default function VehicleForm({ initialData, onSubmit, onCancel }: VehicleFormProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null)
   const [formData, setFormData] = useState({
     vin: initialData?.vin || '',
     make: initialData?.make || '',
@@ -23,6 +25,43 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }: Vehicle
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     await onSubmit(formData)
+  }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file')
+      return
+    }
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // Prepare form data for upload
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!response.ok) throw new Error('Upload failed')
+      
+      const { imagePath } = await response.json()
+      setFormData(prev => ({ ...prev, imageUrl: imagePath }))
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      alert('Failed to upload image')
+    }
   }
 
   return (
@@ -97,13 +136,46 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }: Vehicle
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Image URL</label>
-          <input
-            type="url"
-            value={formData.imageUrl || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-            className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-          />
+          <label className="block text-sm font-medium mb-1">Vehicle Image</label>
+          <div className="space-y-2">
+            {imagePreview && (
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <img
+                  src={imagePreview}
+                  alt="Vehicle preview"
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {imagePreview ? 'Change Image' : 'Upload Image'}
+              </button>
+              {imagePreview && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImagePreview(null)
+                    setFormData(prev => ({ ...prev, imageUrl: '' }))
+                  }}
+                  className="px-4 py-2 text-sm text-red-600 border border-red-600 rounded hover:bg-red-50 dark:hover:bg-red-900"
+                >
+                  Remove Image
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

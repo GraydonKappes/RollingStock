@@ -83,6 +83,15 @@ export default function VehiclesPage() {
           <div className={styles.grid}>
             {vehicles.map((vehicle) => (
               <div key={vehicle.id} className={styles.itemCard}>
+                {vehicle.imageUrl && (
+                  <div className={styles.imageContainer}>
+                    <img
+                      src={vehicle.imageUrl}
+                      alt={`${vehicle.make} ${vehicle.model}`}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                )}
                 <div className={styles.header}>
                   <h3 className={styles.title}>
                     {vehicle.make} {vehicle.model} ({vehicle.year})
