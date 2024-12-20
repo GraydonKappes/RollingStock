@@ -4,6 +4,16 @@ import { sql } from '@/lib/db'
 import { Vehicle, VehicleStatus, ProjectStatus } from '@/types/vehicle'
 import { Project } from '@/types/project'
 
+interface ProjectAssignment {
+  project: {
+    id: number;
+    name: string;
+    location: string;
+    status: ProjectStatus;
+    createdAt: string | Date;
+  }
+}
+
 export async function getVehicles(): Promise<Vehicle[]> {
   const rows = await sql`
     SELECT 
@@ -47,7 +57,7 @@ export async function getVehicles(): Promise<Vehicle[]> {
     category: row.category,
     imageUrl: row.image_url,
     createdAt: new Date(row.created_at),
-    assignments: (row.assignments || []).map((assignment: any) => ({
+    assignments: (row.assignments || []).map((assignment: ProjectAssignment) => ({
       project: {
         ...assignment.project,
         status: assignment.project.status as ProjectStatus,
@@ -141,7 +151,7 @@ export async function getVehicleById(id: number): Promise<Vehicle | null> {
     category: row.category,
     imageUrl: row.image_url,
     createdAt: new Date(row.created_at),
-    assignments: (row.assignments || []).map((assignment: any) => ({
+    assignments: (row.assignments || []).map((assignment: ProjectAssignment) => ({
       project: {
         ...assignment.project,
         status: assignment.project.status as ProjectStatus,
