@@ -7,6 +7,7 @@ export const revalidate = 0
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
+  const headers = new Headers(request.headers)
   
   try {
     console.log('Health check: Starting database test')
@@ -22,7 +23,9 @@ export async function GET(request: Request) {
       },
       request: {
         url: requestUrl.toString(),
-        host: requestUrl.host
+        host: requestUrl.host,
+        originalUrl: headers.get('x-url'),
+        hostname: headers.get('x-hostname')
       },
       env: process.env.NODE_ENV,
       timestamp: new Date().toISOString()
@@ -38,7 +41,9 @@ export async function GET(request: Request) {
       message: error instanceof Error ? error.message : 'Unknown error',
       request: {
         url: requestUrl.toString(),
-        host: requestUrl.host
+        host: requestUrl.host,
+        originalUrl: headers.get('x-url'),
+        hostname: headers.get('x-hostname')
       },
       env: process.env.NODE_ENV,
       timestamp: new Date().toISOString()
