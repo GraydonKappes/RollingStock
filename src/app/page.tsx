@@ -1,8 +1,3 @@
-'use client'
-
-import { Suspense } from 'react'
-import Error from './error'
-
 export const dynamic = 'force-dynamic'
 
 export default function Home() {
@@ -17,7 +12,7 @@ export default function Home() {
         >
           <h2 className="text-xl font-semibold mb-2">Vehicle Management</h2>
           <p className="text-gray-600 dark:text-gray-300">
-            View and manage your fleet of vehicles, including status updates and assignments.
+            View and manage your fleet of vehicles.
           </p>
         </a>
 
@@ -27,16 +22,15 @@ export default function Home() {
         >
           <h2 className="text-xl font-semibold mb-2">Project Management</h2>
           <p className="text-gray-600 dark:text-gray-300">
-            Manage projects and vehicle assignments.
+            Manage projects.
           </p>
         </a>
 
         <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-          <h2 className="text-xl font-semibold mb-2">Quick Stats</h2>
-          <ul className="space-y-2">
-            <li className="text-gray-600 dark:text-gray-300">Active Vehicles: Coming soon</li>
-            <li className="text-gray-600 dark:text-gray-300">Active Projects: Coming soon</li>
-          </ul>
+          <h2 className="text-xl font-semibold mb-2">Status</h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            System Online
+          </p>
         </div>
       </div>
     </div>
