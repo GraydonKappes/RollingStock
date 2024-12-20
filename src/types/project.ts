@@ -1,14 +1,21 @@
+export type ProjectStatus = 'active' | 'completed'
+
 export type Project = {
   id: number
   name: string
+  client: string
   location: string
-  status: 'active' | 'completed'
+  status: ProjectStatus
+  startDate: string | Date
+  endDate?: string | Date
   createdAt: Date
-  vehicles?: {
+  assignments?: {
     id: number
-    make: string
-    model: string
-    year: number
-    status: string
+    vehicle: {
+      id: number
+      make: string
+      model: string
+      year: number
+    }
   }[]
 } 

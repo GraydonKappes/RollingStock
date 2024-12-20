@@ -163,49 +163,44 @@ export async function getVehicleById(id: number): Promise<Vehicle | null> {
 
 export async function getProjects(): Promise<Project[]> {
   try {
-    // Simple query first to verify data exists
-    const checkProjects = await sql`
-      SELECT COUNT(*) as count FROM projects
-    `
-    console.log('Project count:', checkProjects[0].count)
-
-    // Basic query without joins to verify project data
     const rows = await sql`
       SELECT 
         p.id,
         p.name,
         p.location,
-        p.status::text as status,
+        p.status,
         p.created_at,
         COALESCE(
-          (
-            SELECT json_agg(
-              json_build_object(
+          json_agg(
+            json_build_object(
+              'id', pa.id,
+              'vehicle', json_build_object(
                 'id', v.id,
                 'make', v.make,
                 'model', v.model,
-                'year', v.year,
-                'status', v.status
+                'year', v.year
               )
             )
-            FROM project_assignments pa
-            JOIN vehicles v ON pa.vehicle_id = v.id
-            WHERE pa.project_id = p.id
-          ),
-          '[]'::json
-        ) as vehicles
+          ) FILTER (WHERE v.id IS NOT NULL),
+          '[]'
+        ) as assignments
       FROM projects p
+      LEFT JOIN project_assignments pa ON p.id = pa.project_id
+      LEFT JOIN vehicles v ON pa.vehicle_id = v.id
+      GROUP BY p.id, p.name, p.location, p.status, p.created_at
       ORDER BY p.created_at DESC
     `
-    console.log('Basic projects query result:', JSON.stringify(rows, null, 2))
 
     return rows.map(row => ({
       id: row.id,
       name: row.name,
+      client: 'N/A',
       location: row.location,
       status: row.status as ProjectStatus,
+      startDate: row.created_at,
+      endDate: undefined,
       createdAt: new Date(row.created_at),
-      vehicles: row.vehicles || []
+      assignments: row.assignments || []
     }))
   } catch (error) {
     console.error('Database error in getProjects:', error)
@@ -213,22 +208,33 @@ export async function getProjects(): Promise<Project[]> {
   }
 }
 
-export async function createProject(data: Omit<Project, 'id' | 'createdAt' | 'vehicles'>) {
+export async function createProject(data: Pick<Project, 'name' | 'location' | 'status'>) {
   const result = await sql`
-    INSERT INTO projects (name, location, status)
-    VALUES (${data.name}, ${data.location}, ${data.status})
+    INSERT INTO projects (
+      name,
+      location,
+      status
+    )
+    VALUES (
+      ${data.name},
+      ${data.location},
+      ${data.status}
+    )
     RETURNING id
   `
   return result[0].id
 }
 
-export async function updateProject(id: number, data: Partial<Omit<Project, 'id' | 'createdAt' | 'vehicles'>>) {
+export async function updateProject(
+  id: number, 
+  data: Partial<Pick<Project, 'name' | 'location' | 'status'>>
+) {
   const result = await sql`
     UPDATE projects 
     SET
-      name = ${data.name},
-      location = ${data.location},
-      status = ${data.status}
+      name = COALESCE(${data.name}, name),
+      location = COALESCE(${data.location}, location),
+      status = COALESCE(${data.status}, status)
     WHERE id = ${id}
     RETURNING id
   `
