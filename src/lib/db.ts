@@ -1,7 +1,6 @@
 import { neon, neonConfig } from '@neondatabase/serverless'
 
 // Configure neon for Edge runtime
-neonConfig.fetchConnectionCache = true
 neonConfig.wsProxy = (host) => `${host}/v1`
 neonConfig.useSecureWebSocket = true
 
