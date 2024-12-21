@@ -215,91 +215,103 @@ export default function VehicleForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Basic Vehicle Information */}
-      <div className="space-y-4">
-        <label className="block">
-          <span className="text-gray-700 dark:text-gray-200">VIN</span>
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 max-w-2xl mx-auto">
+      <div className="space-y-3">
+        {/* VIN */}
+        <div>
+          <div className="mb-1">VIN</div>
           <input
             type="text"
             name="vin"
             value={formData.vin}
             onChange={handleFieldChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
             required
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-gray-700 dark:text-gray-200">Make</span>
+        {/* Make */}
+        <div>
+          <div className="mb-1">Make</div>
           <input
             type="text"
             name="make"
             value={formData.make}
             onChange={handleFieldChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
             required
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-gray-700 dark:text-gray-200">Model</span>
+        {/* Model */}
+        <div>
+          <div className="mb-1">Model</div>
           <input
             type="text"
             name="model"
             value={formData.model}
             onChange={handleFieldChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
             required
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-gray-700 dark:text-gray-200">Year</span>
+        {/* Year */}
+        <div>
+          <div className="mb-1">Year</div>
           <input
             type="number"
             name="year"
             value={formData.year}
             onChange={handleFieldChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
             required
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-gray-700 dark:text-gray-200">Category</span>
+        {/* Category */}
+        <div>
+          <div className="mb-1">Category</div>
           <input
             type="text"
             name="category"
             value={formData.category}
             onChange={handleFieldChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
             required
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-gray-700 dark:text-gray-200">Status</span>
+        {/* Status */}
+        <div>
+          <div className="mb-1">Status</div>
           <select
             name="status"
             value={formData.status}
             onChange={handleFieldChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-            required
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
           >
             <option value="active">Active</option>
             <option value="maintenance">Maintenance</option>
             <option value="retired">Retired</option>
           </select>
-        </label>
+        </div>
 
-        {/* Project Assignment (only for editing) */}
+        {/* Project Assignment */}
         {onAssignToProject && availableProjects && (
-          <label className="block">
-            <span className="text-gray-700 dark:text-gray-200">Assign to Project</span>
+          <div>
+            <div className="mb-1">
+              Assign to Project
+              {initialData?.assignments && initialData.assignments.length > 0 && (
+                <span className="text-red-500 ml-2">
+                  (Already assigned to {initialData.assignments[0].project.name})
+                </span>
+              )}
+            </div>
             <select
               onChange={(e) => onAssignToProject(Number(e.target.value))}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+              disabled={Boolean(initialData?.assignments && initialData.assignments.length > 0)}
             >
               <option value="">Select a project...</option>
               {availableProjects.map(project => (
@@ -308,70 +320,72 @@ export default function VehicleForm({
                 </option>
               ))}
             </select>
-          </label>
+          </div>
         )}
 
-        {/* Image Upload Section */}
-        <label className="block">
-          <span className="text-gray-700 dark:text-gray-200">Images</span>
+        {/* Images */}
+        <div>
+          <div className="mb-1">Images</div>
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleImageChange}
             accept="image/*"
             multiple
-            className="mt-1 block w-full"
+            className="w-64"
             disabled={isUploading}
           />
-        </label>
-
-        {/* Image previews section (existing code) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-          {imagePreviews.map((preview, index) => (
-            <div key={index} className="relative group">
-              <img
-                src={preview.url}
-                alt={`Preview ${index + 1}`}
-                className="w-full h-40 object-cover rounded"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                <button
-                  type="button"
-                  onClick={() => handleSetPrimaryImage(index)}
-                  className={`p-2 rounded ${
-                    preview.isPrimary ? 'bg-green-500' : 'bg-blue-500'
-                  } text-white text-sm`}
-                >
-                  {preview.isPrimary ? 'Primary' : 'Set Primary'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(index)}
-                  className="p-2 rounded bg-red-500 text-white text-sm"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
+
+        {/* Image Previews */}
+        {imagePreviews.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            {imagePreviews.map((preview, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={preview.url}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-40 object-cover rounded"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSetPrimaryImage(index)}
+                    className={`p-2 rounded ${
+                      preview.isPrimary ? 'bg-green-500' : 'bg-blue-500'
+                    } text-white text-sm`}
+                  >
+                    {preview.isPrimary ? 'Primary' : 'Set Primary'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="p-2 rounded bg-red-500 text-white text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Form buttons */}
-      <div className="flex justify-end gap-4">
+      {/* Form Buttons */}
+      <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
           disabled={isUploading}
         >
-          {isUploading ? 'Uploading...' : initialData ? 'Update' : 'Create'}
+          {isUploading ? 'Uploading...' : initialData ? 'Update' : 'Create'} Vehicle
         </button>
       </div>
     </form>

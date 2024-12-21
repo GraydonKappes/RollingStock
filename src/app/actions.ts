@@ -363,14 +363,29 @@ export async function deleteProject(id: number) {
 
 export async function assignVehicleToProject(vehicleId: number, projectId: number) {
   try {
+    // First check if vehicle is already assigned to any project
+    const existingAssignment = await sql`
+      SELECT project_id 
+      FROM project_assignments 
+      WHERE vehicle_id = ${vehicleId}
+    `
+
+    if (existingAssignment.length > 0) {
+      throw new Error('Vehicle is already assigned to a project')
+    }
+
     const result = await sql`
       INSERT INTO project_assignments (vehicle_id, project_id)
       VALUES (${vehicleId}, ${projectId})
       RETURNING id
     `
     return result[0].id
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to assign vehicle to project:', error)
+    // Check for unique constraint violation
+    if (error.code === '23505') { // PostgreSQL unique violation code
+      throw new Error('Vehicle is already assigned to a project')
+    }
     throw error
   }
 }

@@ -28,8 +28,9 @@ export default function AssignmentModal({
     try {
       await onAssign(Number(selectedVehicleId))
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to assign vehicle:', error)
+      alert(error.message || 'Failed to assign vehicle to project')
     } finally {
       setIsLoading(false)
     }
