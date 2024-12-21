@@ -8,6 +8,7 @@ import { getVehicles, createVehicle, updateVehicle, deleteVehicle, getProjects, 
 import VehicleForm from '@/components/VehicleForm'
 import styles from '@/styles/Table.module.css'
 import { Project } from '@/types/project'
+import ImageCarousel from '@/components/ImageCarousel'
 
 // Add new type for extended status filter
 type ExtendedStatusFilter = VehicleStatus | 'all' | 'unassigned-active'
@@ -51,24 +52,28 @@ export default function VehiclesPage() {
     }
   }
 
-  const handleCreateVehicle = async (data: Omit<Vehicle, 'id' | 'createdAt' | 'assignments'>) => {
+  const handleCreateVehicle = async (data: Omit<Vehicle, 'id' | 'createdAt' | 'assignments' | 'images'>) => {
     try {
-      await createVehicle(data)
+      const id = await createVehicle(data)
       await loadVehicles()
       setIsFormOpen(false)
+      return id // Return the ID for image handling
     } catch (error) {
       console.error('Failed to create vehicle:', error)
+      throw error
     }
   }
 
-  const handleUpdateVehicle = async (data: Omit<Vehicle, 'id' | 'createdAt' | 'assignments'>) => {
+  const handleUpdateVehicle = async (data: Omit<Vehicle, 'id' | 'createdAt' | 'assignments' | 'images'>) => {
     if (!editingVehicle) return
     try {
-      await updateVehicle(editingVehicle.id, data)
+      const id = await updateVehicle(editingVehicle.id, data)
       await loadVehicles()
       setEditingVehicle(null)
+      return id // Return the ID for image handling
     } catch (error) {
       console.error('Failed to update vehicle:', error)
+      throw error
     }
   }
 
@@ -138,12 +143,11 @@ export default function VehiclesPage() {
           <div className={styles.grid}>
             {filteredVehicles.map((vehicle) => (
               <div key={vehicle.id} className={styles.itemCard}>
-                {vehicle.imageUrl && (
+                {vehicle.images.length > 0 && (
                   <div className={styles.imageContainer}>
-                    <img
-                      src={vehicle.imageUrl}
-                      alt={`${vehicle.make} ${vehicle.model}`}
-                      className="object-cover w-full h-full"
+                    <ImageCarousel 
+                      images={vehicle.images} 
+                      altText={`${vehicle.make} ${vehicle.model}`} 
                     />
                   </div>
                 )}
