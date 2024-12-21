@@ -3,11 +3,14 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
-import { Vehicle } from '@/types/vehicle'
+import { Vehicle, VehicleStatus } from '@/types/vehicle'
 import { getVehicles, createVehicle, updateVehicle, deleteVehicle, getProjects, assignVehicleToProject } from '@/app/actions'
 import VehicleForm from '@/components/VehicleForm'
 import styles from '@/styles/Table.module.css'
 import { Project } from '@/types/project'
+
+// Add new type for extended status filter
+type ExtendedStatusFilter = VehicleStatus | 'all' | 'unassigned-active'
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -16,6 +19,7 @@ export default function VehiclesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [availableProjects, setAvailableProjects] = useState<Project[]>([])
+  const [statusFilter, setStatusFilter] = useState<ExtendedStatusFilter>('all')
 
   // Load vehicles on mount
   useEffect(() => {
@@ -89,6 +93,17 @@ export default function VehiclesPage() {
     }
   }
 
+  const filteredVehicles = vehicles.filter(vehicle => {
+    switch (statusFilter) {
+      case 'unassigned-active':
+        return vehicle.status === 'active' && (!vehicle.assignments || vehicle.assignments.length === 0)
+      case 'all':
+        return true
+      default:
+        return vehicle.status === statusFilter
+    }
+  })
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>
   }
@@ -97,7 +112,20 @@ export default function VehiclesPage() {
     <div className="container">
       <div className={styles.tableContainer}>
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Vehicles</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">Vehicles</h1>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as ExtendedStatusFilter)}
+              className="p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="retired">Retired</option>
+              <option value="unassigned-active">Unassigned Active</option>
+            </select>
+          </div>
           <button 
             onClick={() => setIsFormOpen(true)} 
             className="btn btn-primary"
@@ -108,7 +136,7 @@ export default function VehiclesPage() {
 
         {viewMode === 'grid' ? (
           <div className={styles.grid}>
-            {vehicles.map((vehicle) => (
+            {filteredVehicles.map((vehicle) => (
               <div key={vehicle.id} className={styles.itemCard}>
                 {vehicle.imageUrl && (
                   <div className={styles.imageContainer}>
@@ -160,7 +188,7 @@ export default function VehiclesPage() {
           </div>
         ) : (
           <div className={styles.list}>
-            {vehicles.map((vehicle) => (
+            {filteredVehicles.map((vehicle) => (
               <div key={vehicle.id} className={styles.listItem}>
                 <div className={styles.listItemInfo}>
                   <h3 className={styles.title}>
