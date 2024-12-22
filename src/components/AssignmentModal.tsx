@@ -51,8 +51,9 @@ export default function AssignmentModal({
             <select
               value={selectedVehicleId}
               onChange={(e) => setSelectedVehicleId(e.target.value as number | '')}
-              className="input"
+              className="select"
               required
+              disabled={isLoading}
             >
               <option value="">Select a vehicle...</option>
               {availableVehicles.map((vehicle) => (

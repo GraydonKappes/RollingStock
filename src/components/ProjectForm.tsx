@@ -5,7 +5,7 @@ import { Project, ProjectStatus } from '@/types/project'
 
 type ProjectFormProps = {
   initialData?: Partial<Project>
-  onSubmit: (data: { name: string; location: string; status: ProjectStatus }) => Promise<void>
+  onSubmit: (data: Omit<Project, 'id' | 'createdAt' | 'assignments'>) => Promise<void>
   onCancel: () => void
 }
 
@@ -21,7 +21,9 @@ export default function ProjectForm({ initialData, onSubmit, onCancel }: Project
     await onSubmit({
       name: formData.name,
       location: formData.location,
-      status: formData.status
+      status: formData.status,
+      client: initialData?.client || '', // Assuming client is a string
+      startDate: initialData?.startDate || new Date() // Assuming startDate is a Date
     })
   }
 

@@ -29,17 +29,8 @@ export async function deleteImageFile(url: string) {
   }
 }
 
-export async function getVehicles(): Promise<Vehicle[]> {
-  // First check if vehicle_images table exists
-  const tableExists = await sql`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables 
-      WHERE table_name = 'vehicle_images'
-    );
-  `
-
-  // If table doesn't exist, return vehicles without images
-  if (!tableExists[0].exists) {
+async function getVehiclesImpl(): Promise<Vehicle[]> {
+  try {
     const rows = await sql`
       SELECT 
         v.*,
@@ -56,21 +47,24 @@ export async function getVehicles(): Promise<Vehicle[]> {
             )
           ) FILTER (WHERE p.id IS NOT NULL),
           '[]'
-        ) as assignments
+        ) as assignments,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', vi.id,
+              'url', vi.url,
+              'isPrimary', vi.is_primary
+            ) ORDER BY vi.display_order
+          ) FILTER (WHERE vi.id IS NOT NULL),
+          '[]'
+        ) as images
       FROM vehicles v
       LEFT JOIN project_assignments pa ON v.id = pa.vehicle_id
       LEFT JOIN projects p ON pa.project_id = p.id
-      GROUP BY 
-        v.id, 
-        v.vin, 
-        v.make, 
-        v.model, 
-        v.year, 
-        v.status, 
-        v.category,
-        v.created_at
+      LEFT JOIN vehicle_images vi ON v.id = vi.vehicle_id
+      GROUP BY v.id
+      ORDER BY v.created_at DESC
     `
-    
     return rows.map(row => ({
       id: row.id,
       vin: row.vin,
@@ -79,7 +73,7 @@ export async function getVehicles(): Promise<Vehicle[]> {
       year: row.year,
       status: row.status as VehicleStatus,
       category: row.category,
-      images: [], // Empty array since table doesn't exist
+      images: row.images || [],
       createdAt: new Date(row.created_at),
       assignments: (row.assignments || []).map((assignment: ProjectAssignment) => ({
         project: {
@@ -89,71 +83,65 @@ export async function getVehicles(): Promise<Vehicle[]> {
         }
       }))
     }))
+  } catch (error) {
+    console.error('Error in getVehicles:', error)
+    throw error
   }
+}
 
-  // If table exists, use the original query
+async function getProjectsImpl(): Promise<Project[]> {
   const rows = await sql`
     SELECT 
-      v.*,
+      p.*,
       COALESCE(
         json_agg(
           json_build_object(
-            'project', json_build_object(
-              'id', p.id,
-              'name', p.name,
-              'location', p.location,
-              'status', p.status,
-              'createdAt', p.created_at
+            'vehicle', json_build_object(
+              'id', v.id,
+              'make', v.make,
+              'model', v.model,
+              'year', v.year,
+              'status', v.status
             )
           )
-        ) FILTER (WHERE p.id IS NOT NULL),
+        ) FILTER (WHERE v.id IS NOT NULL),
         '[]'
-      ) as assignments,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', vi.id,
-            'url', vi.url,
-            'isPrimary', vi.is_primary,
-            'displayOrder', vi.display_order,
-            'createdAt', vi.created_at
-          ) ORDER BY vi.display_order
-        ) FILTER (WHERE vi.id IS NOT NULL),
-        '[]'
-      ) as images
-    FROM vehicles v
-    LEFT JOIN project_assignments pa ON v.id = pa.vehicle_id
-    LEFT JOIN projects p ON pa.project_id = p.id
-    LEFT JOIN vehicle_images vi ON v.id = vi.vehicle_id
-    GROUP BY 
-      v.id, 
-      v.vin, 
-      v.make, 
-      v.model, 
-      v.year, 
-      v.status, 
-      v.category,
-      v.created_at
+      ) as assignments
+    FROM projects p
+    LEFT JOIN project_assignments pa ON p.id = pa.project_id
+    LEFT JOIN vehicles v ON pa.vehicle_id = v.id
+    GROUP BY p.id
+    ORDER BY p.created_at DESC
   `
   
   return rows.map(row => ({
     id: row.id,
-    vin: row.vin,
-    make: row.make,
-    model: row.model,
-    year: row.year,
-    status: row.status as VehicleStatus,
-    category: row.category,
-    images: row.images || [],
+    name: row.name,
+    client: row.client || 'N/A',
+    location: row.location,
+    status: row.status as ProjectStatus,
+    startDate: row.start_date || row.created_at,
+    endDate: row.end_date,
     createdAt: new Date(row.created_at),
-    assignments: (row.assignments || []).map((assignment: ProjectAssignment) => ({
-      project: {
-        ...assignment.project,
-        status: assignment.project.status as ProjectStatus,
-        createdAt: new Date(assignment.project.createdAt)
+    assignments: (row.assignments || []).map((assignment: any) => ({
+      vehicle: {
+        id: assignment.vehicle.id,
+        make: assignment.vehicle.make,
+        model: assignment.vehicle.model,
+        year: assignment.vehicle.year,
+        status: assignment.vehicle.status as VehicleStatus
       }
     }))
   }))
+}
+
+export const getVehicles = getVehiclesImpl
+export const getProjects = getProjectsImpl
+export const unassignVehicle = async (projectId: number, vehicleId: number) => {
+  await sql`
+    DELETE FROM project_assignments 
+    WHERE project_id = ${projectId} AND vehicle_id = ${vehicleId}
+  `
 }
 
 export async function getCurrentVehicleStatus() {
@@ -273,53 +261,6 @@ export async function getVehicleById(id: number): Promise<Vehicle | null> {
   }
 } 
 
-export async function getProjects(): Promise<Project[]> {
-  try {
-    const rows = await sql`
-      SELECT 
-        p.id,
-        p.name,
-        p.location,
-        p.status,
-        p.created_at,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', pa.id,
-              'vehicle', json_build_object(
-                'id', v.id,
-                'make', v.make,
-                'model', v.model,
-                'year', v.year
-              )
-            )
-          ) FILTER (WHERE v.id IS NOT NULL),
-          '[]'
-        ) as assignments
-      FROM projects p
-      LEFT JOIN project_assignments pa ON p.id = pa.project_id
-      LEFT JOIN vehicles v ON pa.vehicle_id = v.id
-      GROUP BY p.id, p.name, p.location, p.status, p.created_at
-      ORDER BY p.created_at DESC
-    `
-
-    return rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      client: 'N/A',
-      location: row.location,
-      status: row.status as ProjectStatus,
-      startDate: row.created_at,
-      endDate: undefined,
-      createdAt: new Date(row.created_at),
-      assignments: row.assignments || []
-    }))
-  } catch (error) {
-    console.error('Database error in getProjects:', error)
-    throw error
-  }
-}
-
 export async function createProject(data: Pick<Project, 'name' | 'location' | 'status'>) {
   const result = await sql`
     INSERT INTO projects (
@@ -363,17 +304,13 @@ export async function deleteProject(id: number) {
 
 export async function assignVehicleToProject(vehicleId: number, projectId: number) {
   try {
-    // First check if vehicle is already assigned to any project
-    const existingAssignment = await sql`
-      SELECT project_id 
-      FROM project_assignments 
+    // First remove any existing assignment
+    await sql`
+      DELETE FROM project_assignments 
       WHERE vehicle_id = ${vehicleId}
     `
 
-    if (existingAssignment.length > 0) {
-      throw new Error('Vehicle is already assigned to a project')
-    }
-
+    // Then create the new assignment
     const result = await sql`
       INSERT INTO project_assignments (vehicle_id, project_id)
       VALUES (${vehicleId}, ${projectId})
@@ -382,22 +319,6 @@ export async function assignVehicleToProject(vehicleId: number, projectId: numbe
     return result[0].id
   } catch (error: any) {
     console.error('Failed to assign vehicle to project:', error)
-    // Check for unique constraint violation
-    if (error.code === '23505') { // PostgreSQL unique violation code
-      throw new Error('Vehicle is already assigned to a project')
-    }
-    throw error
-  }
-}
-
-export async function unassignVehicleFromProject(vehicleId: number, projectId: number) {
-  try {
-    await sql`
-      DELETE FROM project_assignments
-      WHERE vehicle_id = ${vehicleId} AND project_id = ${projectId}
-    `
-  } catch (error) {
-    console.error('Failed to unassign vehicle from project:', error)
     throw error
   }
 }
@@ -501,5 +422,16 @@ export async function debugDatabase() {
   if (tables.some(t => t.table_name === 'vehicle_images')) {
     const images = await sql`SELECT * FROM vehicle_images;`
     console.log('Vehicle images:', images)
+  }
+} 
+
+export async function testDatabaseConnection() {
+  try {
+    const result = await sql`SELECT NOW()`
+    console.log('Database connection successful:', result)
+    return true
+  } catch (error) {
+    console.error('Database connection failed:', error)
+    return false
   }
 } 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "@/styles/globals.css";
+import "@/app/globals.css";
 import Navigation from "@/components/Navigation";
 import { Inter } from 'next/font/google';
 
@@ -17,9 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-background text-foreground min-h-screen`}>
         <Navigation />
-        {children}
+        <main className="min-h-[calc(100vh-4rem)]">
+          {children}
+        </main>
       </body>
     </html>
   );

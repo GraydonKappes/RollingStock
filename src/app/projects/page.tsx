@@ -4,20 +4,17 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { Project, ProjectStatus } from '@/types/project'
-import { Vehicle } from '@/types/vehicle'
-import { getProjects, createProject, updateProject, deleteProject, assignVehicleToProject, unassignVehicleFromProject, getAvailableVehicles } from '@/app/actions'
+import { getProjects, createProject, updateProject, deleteProject, unassignVehicle } from '@/app/actions'
 import ProjectForm from '@/components/ProjectForm'
-import styles from '@/styles/Table.module.css'
-import AssignmentModal from '@/components/AssignmentModal'
+
+type StatusFilter = ProjectStatus | 'all'
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [assigningToProject, setAssigningToProject] = useState<Project | null>(null)
-  const [availableVehicles, setAvailableVehicles] = useState<Vehicle[]>([])
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   useEffect(() => {
     loadProjects()
@@ -34,7 +31,12 @@ export default function ProjectsPage() {
     }
   }
 
-  const handleCreateProject = async (data: Pick<Project, 'name' | 'location' | 'status'>) => {
+  const filteredProjects = projects.filter(project => {
+    if (statusFilter === 'all') return true
+    return project.status === statusFilter
+  })
+
+  const handleCreateProject = async (data: Omit<Project, 'id' | 'createdAt' | 'assignments'>) => {
     try {
       await createProject(data)
       await loadProjects()
@@ -44,7 +46,7 @@ export default function ProjectsPage() {
     }
   }
 
-  const handleUpdateProject = async (data: Pick<Project, 'name' | 'location' | 'status'>) => {
+  const handleUpdateProject = async (data: Omit<Project, 'id' | 'createdAt' | 'assignments'>) => {
     if (!editingProject) return
     try {
       await updateProject(editingProject.id, data)
@@ -65,244 +67,125 @@ export default function ProjectsPage() {
     }
   }
 
-  const handleShowAssignModal = async (project: Project) => {
-    try {
-      const vehicles = await getAvailableVehicles(project.id)
-      setAvailableVehicles(vehicles)
-      setAssigningToProject(project)
-    } catch (error) {
-      console.error('Failed to load available vehicles:', error)
-    }
-  }
-
-  const handleAssignVehicle = async (vehicleId: number) => {
-    if (!assigningToProject) return
-    
-    try {
-      await assignVehicleToProject(vehicleId, assigningToProject.id)
-      await loadProjects() // Reload projects to show updated assignments
-      setAssigningToProject(null)
-    } catch (error) {
-      console.error('Failed to assign vehicle:', error)
-    }
-  }
-
   const handleUnassignVehicle = async (projectId: number, vehicleId: number) => {
-    if (!confirm('Are you sure you want to remove this vehicle from the project?')) return
-    
     try {
-      await unassignVehicleFromProject(vehicleId, projectId)
+      await unassignVehicle(projectId, vehicleId)
       await loadProjects()
     } catch (error) {
       console.error('Failed to unassign vehicle:', error)
     }
   }
 
-  const renderAssignments = (project: Project) => (
-    <div className="mt-4">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="font-medium">Assigned Vehicles</h4>
-        <button
-          onClick={() => handleShowAssignModal(project)}
-          className="btn btn-primary text-sm"
-        >
-          Assign Vehicle
-        </button>
-      </div>
-      
-      {project.assignments?.length ? (
-        <div className="space-y-2">
-          {project.assignments.map((assignment) => (
-            <div
-              key={assignment.id}
-              className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded"
-            >
-              <span>
-                {assignment.vehicle.make} {assignment.vehicle.model} ({assignment.vehicle.year})
-              </span>
-              <button
-                onClick={() => handleUnassignVehicle(project.id, assignment.vehicle.id)}
-                className="text-sm text-red-600 hover:text-red-700"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-gray-500">No vehicles assigned</p>
-      )}
-    </div>
-  )
-
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Projects</h1>
-        <div className="flex items-center gap-4">
-          <div className={styles.viewToggle}>
-            <button 
-              className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
-              onClick={() => setViewMode('grid')}
+    <div className="container mx-auto px-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden animate-fade-in my-8 p-8">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">Projects</h1>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              className="px-3 py-1.5 text-sm rounded-md border border-border bg-background text-foreground"
             >
-              Grid View
-            </button>
-            <button 
-              className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              List View
-            </button>
+              <option value="all">All Projects</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+            </select>
           </div>
+          
           <button
             onClick={() => setIsFormOpen(true)}
-            className="btn btn-primary text-sm"
+            className="btn btn-primary"
           >
             Add Project
           </button>
         </div>
-      </div>
 
-      {viewMode === 'grid' ? (
-        <div className={styles.grid}>
-          {projects.map((project) => (
-            <div key={project.id} className={styles.itemCard}>
-              <div className={styles.header}>
-                <h3 className={styles.title}>{project.name}</h3>
-                <span className={`${styles.statusBadge} ${styles[project.status]}`}>
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+          {filteredProjects.map((project) => (
+            <div key={project.id} className="bg-card rounded-xl p-6 border border-border transition-all duration-200 animate-fade-in flex flex-col gap-4 hover:-translate-y-1 hover:shadow-md">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-semibold text-foreground">{project.name}</h3>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full
+                  ${project.status === 'active' ? 'bg-success/10 text-success' : 'bg-secondary/10 text-secondary'}`}
+                >
                   {project.status}
                 </span>
               </div>
 
-              <div className={styles.details}>
-                <span className={styles.label}>Client</span>
-                <span className={styles.value}>{project.client}</span>
+              <div className="grid grid-cols-[auto,1fr] gap-3 gap-x-6 text-sm">
+                <span className="text-secondary font-medium">Client</span>
+                <span className="text-foreground">{project.client || 'N/A'}</span>
 
-                <span className={styles.label}>Start Date</span>
-                <span className={styles.value}>
+                <span className="text-secondary font-medium">Location</span>
+                <span className="text-foreground">{project.location}</span>
+
+                <span className="text-secondary font-medium">Start Date</span>
+                <span className="text-foreground">
                   {new Date(project.startDate).toLocaleDateString()}
                 </span>
 
-                <span className={styles.label}>End Date</span>
-                <span className={styles.value}>
+                <span className="text-secondary font-medium">End Date</span>
+                <span className="text-foreground">
                   {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Ongoing'}
                 </span>
-
-                <span className={styles.label}>Vehicles Assigned</span>
-                <span className={styles.value}>
-                  {project.assignments?.length || 0}
-                </span>
               </div>
 
-              {renderAssignments(project)}
-
-              <div className={styles.actions}>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setEditingProject(project)}
-                    className="inline-flex items-center justify-center px-3 py-2 w-32 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
-                  >
-                    <svg 
-                      className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                  
-                  <button
-                    onClick={() => handleDeleteProject(project.id)}
-                    className="inline-flex items-center justify-center px-3 py-2 w-32 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200 group"
-                  >
-                    <svg 
-                      className="w-4 h-4 mr-2 text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
+              {project.assignments && project.assignments.length > 0 && (
+                <div className="mt-2">
+                  <h4 className="text-sm font-medium text-secondary mb-2">Assigned Vehicles</h4>
+                  <div className="grid gap-2">
+                    {project.assignments.map((assignment) => (
+                      <div key={assignment.vehicle.id} className="flex items-center justify-between p-2 bg-background rounded-lg border border-border">
+                        <span className="text-sm">
+                          {assignment.vehicle.make} {assignment.vehicle.model} ({assignment.vehicle.year})
+                        </span>
+                        <button
+                          onClick={() => handleUnassignVehicle(project.id, assignment.vehicle.id)}
+                          className="text-sm text-danger hover:text-opacity-80 transition-colors"
+                        >
+                          Unassign
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => setEditingProject(project)}
+                  className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
+                >
+                  <svg className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteProject(project.id)}
+                  className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-danger bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-danger/10 dark:hover:bg-gray-700 hover:border-danger/20 dark:hover:border-gray-600 transition-all duration-200 group"
+                >
+                  <svg className="w-4 h-4 mr-2 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete
+                </button>
               </div>
             </div>
           ))}
         </div>
-      ) : (
-        <div className={styles.list}>
-          {projects.map((project) => (
-            <div key={project.id} className={styles.listItem}>
-              <div className={styles.listItemInfo}>
-                <h3 className={styles.title}>{project.name}</h3>
-                <span className={styles.value}>{project.client}</span>
-              </div>
+      </div>
 
-              <div>
-                <span className={styles.value}>
-                  {new Date(project.startDate).toLocaleDateString()}
-                  {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString()}` : ' (Ongoing)'}
-                </span>
-              </div>
-
-              <div>
-                <span className={`${styles.statusBadge} ${styles[project.status]}`}>
-                  {project.status}
-                </span>
-              </div>
-
-              {renderAssignments(project)}
-
-              <div className={styles.listItemActions}>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setEditingProject(project)}
-                    className="inline-flex items-center justify-center px-3 py-2 w-32 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
-                  >
-                    <svg 
-                      className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                  
-                  <button
-                    onClick={() => handleDeleteProject(project.id)}
-                    className="inline-flex items-center justify-center px-3 py-2 w-32 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200 group"
-                  >
-                    <svg 
-                      className="w-4 h-4 mr-2 text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Modal for Create/Edit Form */}
+      {/* Modal */}
       {(isFormOpen || editingProject) && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2 className={styles.modalTitle}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-6">
               {editingProject ? 'Edit Project' : 'Add New Project'}
             </h2>
             <ProjectForm
@@ -315,15 +198,6 @@ export default function ProjectsPage() {
             />
           </div>
         </div>
-      )}
-
-      {assigningToProject && (
-        <AssignmentModal
-          project={assigningToProject}
-          availableVehicles={availableVehicles}
-          onAssign={handleAssignVehicle}
-          onClose={() => setAssigningToProject(null)}
-        />
       )}
     </div>
   )

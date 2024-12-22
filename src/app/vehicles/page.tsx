@@ -4,13 +4,13 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { Vehicle, VehicleStatus } from '@/types/vehicle'
-import { getVehicles, createVehicle, updateVehicle, deleteVehicle, getProjects, assignVehicleToProject } from '@/app/actions'
+import { getVehicles, createVehicle, updateVehicle, deleteVehicle, getProjects, assignVehicleToProject, deleteVehicleImage } from '@/app/actions'
 import VehicleForm from '@/components/VehicleForm'
-import styles from '@/styles/Table.module.css'
 import { Project } from '@/types/project'
 import ImageCarousel from '@/components/ImageCarousel'
 
-// Add new type for extended status filter
+// Remove styles import and use Tailwind classes
+
 type ExtendedStatusFilter = VehicleStatus | 'all' | 'unassigned-active'
 
 export default function VehiclesPage() {
@@ -114,15 +114,15 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className="container">
-      <div className={styles.tableContainer}>
+    <div className="container mx-auto px-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden animate-fade-in my-8 p-8">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold">Vehicles</h1>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as ExtendedStatusFilter)}
-              className="p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+              className="px-3 py-1.5 text-sm rounded-md border border-border bg-background text-foreground"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -131,44 +131,84 @@ export default function VehiclesPage() {
               <option value="unassigned-active">Unassigned Active</option>
             </select>
           </div>
-          <button 
-            onClick={() => setIsFormOpen(true)} 
-            className="btn btn-primary"
-          >
-            Add Vehicle
-          </button>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              <button 
+                className={`px-4 py-2 text-sm font-medium transition-colors
+                  ${viewMode === 'grid' 
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-secondary hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                onClick={() => setViewMode('grid')}
+              >
+                Grid View
+              </button>
+              <button 
+                className={`px-4 py-2 text-sm font-medium transition-colors
+                  ${viewMode === 'list' 
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-secondary hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                onClick={() => setViewMode('list')}
+              >
+                List View
+              </button>
+            </div>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="btn btn-primary"
+            >
+              Add Vehicle
+            </button>
+          </div>
         </div>
 
         {viewMode === 'grid' ? (
-          <div className={styles.grid}>
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {filteredVehicles.map((vehicle) => (
-              <div key={vehicle.id} className={styles.itemCard}>
-                {vehicle.images.length > 0 && (
-                  <div className={styles.imageContainer}>
-                    <ImageCarousel 
-                      images={vehicle.images} 
-                      altText={`${vehicle.make} ${vehicle.model}`} 
-                    />
-                  </div>
-                )}
-                <div className={styles.header}>
-                  <h3 className={styles.title}>
+              <div key={vehicle.id} className="bg-card rounded-xl p-6 border border-border transition-all duration-200 animate-fade-in flex flex-col gap-4 overflow-hidden hover:-translate-y-1 hover:shadow-md">
+                <div className="relative -mx-6 -mt-6 mb-4">
+                  <ImageCarousel 
+                    images={vehicle.images.map(img => ({
+                      id: img.id,
+                      url: img.url,
+                      isPrimary: img.isPrimary
+                    }))}
+                    onImageDelete={async (imageId) => {
+                      try {
+                        await deleteVehicleImage(imageId)
+                        await loadVehicles()
+                      } catch (error) {
+                        console.error('Failed to delete image:', error)
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {vehicle.make} {vehicle.model} ({vehicle.year})
                   </h3>
-                  <span className={`${styles.statusBadge} ${styles[vehicle.status]}`}>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full
+                    ${vehicle.status === 'active' ? 'bg-success/10 text-success' :
+                      vehicle.status === 'maintenance' ? 'bg-warning/10 text-warning' :
+                      'bg-danger/10 text-danger'}`}>
                     {vehicle.status}
                   </span>
                 </div>
-                
-                <div className={styles.details}>
-                  <span className={styles.label}>VIN</span>
-                  <span className={styles.value}>{vehicle.vin}</span>
-                  
-                  <span className={styles.label}>Category</span>
-                  <span className={styles.value}>{vehicle.category}</span>
-                  
-                  <span className={styles.label}>Project</span>
-                  <span className={styles.value}>
+
+                <div className="grid grid-cols-[auto,1fr] gap-3 gap-x-6 text-sm">
+                  <span className="text-secondary font-medium">VIN</span>
+                  <span className="text-foreground">{vehicle.vin}</span>
+
+                  <span className="text-secondary font-medium">Category</span>
+                  <span className="text-foreground">{vehicle.category}</span>
+                </div>
+
+                <div className="grid grid-cols-[auto,1fr] gap-3 gap-x-6 text-sm">
+                  <span className="text-secondary font-medium">Project</span>
+                  <span className="text-foreground">
                     {vehicle.assignments?.[0]?.project?.name || 'Unassigned'}
                   </span>
                 </div>
@@ -176,7 +216,7 @@ export default function VehiclesPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setEditingVehicle(vehicle)}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
                   >
                     <svg 
                       className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400" 
@@ -191,7 +231,7 @@ export default function VehiclesPage() {
                   
                   <button
                     onClick={() => handleDeleteVehicle(vehicle.id)}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200 group"
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200 group"
                   >
                     <svg 
                       className="w-4 h-4 mr-2 text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300" 
@@ -208,59 +248,55 @@ export default function VehiclesPage() {
             ))}
           </div>
         ) : (
-          <div className={styles.list}>
+          <div className="space-y-4">
             {filteredVehicles.map((vehicle) => (
-              <div key={vehicle.id} className={styles.listItem}>
-                <div className={styles.listItemInfo}>
-                  <h3 className={styles.title}>
+              <div key={vehicle.id} className="bg-card rounded-xl p-6 border border-border flex items-center justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {vehicle.make} {vehicle.model} ({vehicle.year})
                   </h3>
-                  <span className={styles.value}>{vehicle.vin}</span>
+                  <span className="text-foreground">{vehicle.vin}</span>
                 </div>
                 
                 <div>
-                  <span className={styles.label}>Category</span>
-                  <span className={styles.value}>{vehicle.category}</span>
-                </div>
-
-                <div>
-                  <span className={`${styles.statusBadge} ${styles[vehicle.status]}`}>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full
+                    ${vehicle.status === 'active' ? 'bg-success/10 text-success' :
+                      vehicle.status === 'maintenance' ? 'bg-warning/10 text-warning' :
+                      'bg-danger/10 text-danger'}`}>
                     {vehicle.status}
                   </span>
                 </div>
 
-                <div className={styles.listItemActions}>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setEditingVehicle(vehicle)}
-                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setEditingVehicle(vehicle)}
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
+                  >
+                    <svg 
+                      className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
                     >
-                      <svg 
-                        className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Edit
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDeleteVehicle(vehicle.id)}
-                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200 group"
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  
+                  <button
+                    onClick={() => handleDeleteVehicle(vehicle.id)}
+                    className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200 group"
+                  >
+                    <svg 
+                      className="w-4 h-4 mr-2 text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
                     >
-                      <svg 
-                        className="w-4 h-4 mr-2 text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -268,11 +304,11 @@ export default function VehiclesPage() {
         )}
       </div>
       
-      {/* Modal Form */}
+      {/* Modal */}
       {(isFormOpen || editingVehicle) && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2 className={styles.modalTitle}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-6">
               {editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
             </h2>
             <VehicleForm

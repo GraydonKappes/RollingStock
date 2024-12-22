@@ -17,9 +17,8 @@ export type Vehicle = {
   year: number
   status: VehicleStatus
   category: string
-  images: VehicleImage[]
   createdAt: Date
-  assignments: {
+  assignments: Array<{
     project: {
       id: number
       name: string
@@ -27,5 +26,11 @@ export type Vehicle = {
       status: ProjectStatus
       createdAt: Date
     }
-  }[]
+  }>
+  images: Array<{
+    id: number
+    url: string
+    isPrimary: boolean
+    displayOrder?: number
+  }>
 } 

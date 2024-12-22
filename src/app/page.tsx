@@ -1,35 +1,24 @@
-import styles from '@/styles/Home.module.css'
+'use client'
 
-export default async function Home() {
+import React, { useEffect } from 'react'
+import { testDatabaseConnection } from '@/app/actions'
+
+export default function Home() {
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        await testDatabaseConnection()
+      } catch (error) {
+        console.error('Connection test failed:', error)
+      }
+    }
+    testConnection()
+  }, [])
+
   return (
-    <main className={styles.main}>
-      <div className="container">
-        <h1 className={styles.title}>Fleet Management System</h1>
-        
-        <div className={styles.grid}>
-          <a href="/vehicles" className={styles.card}>
-            <h2 className={styles.cardTitle}>Vehicle Management</h2>
-            <p className={styles.cardText}>
-              View and manage your fleet of vehicles with real-time status updates.
-            </p>
-          </a>
-
-          <a href="/projects" className={styles.card}>
-            <h2 className={styles.cardTitle}>Project Management</h2>
-            <p className={styles.cardText}>
-              Track and manage ongoing projects and vehicle assignments efficiently.
-            </p>
-          </a>
-
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>Status</h2>
-            <p className={styles.cardText}>
-              <span className={styles.statusDot}></span>
-              System Online
-            </p>
-          </div>
-        </div>
-      </div>
-    </main>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8">Welcome to Fleet Management</h1>
+      {/* Rest of your component */}
+    </div>
   )
 }

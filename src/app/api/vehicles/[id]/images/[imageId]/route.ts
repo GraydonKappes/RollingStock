@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db'
+import { NeonQueryFunction } from '@neondatabase/serverless'
 
 export async function PATCH(
   request: NextRequest,
@@ -9,7 +10,7 @@ export async function PATCH(
     const { isPrimary } = await request.json()
     const vehicleId = parseInt(params.id)
     
-    // If setting as primary, unset any existing primary images first
+    // First unset any existing primary images if setting a new primary
     if (isPrimary) {
       await sql`
         UPDATE vehicle_images 
@@ -18,11 +19,12 @@ export async function PATCH(
       `
     }
     
-    // Update the specified image
+    // Then update the specified image
     await sql`
       UPDATE vehicle_images 
       SET is_primary = ${isPrimary}
       WHERE id = ${parseInt(params.imageId)}
+      AND vehicle_id = ${vehicleId}
     `
     
     return NextResponse.json({ success: true })
