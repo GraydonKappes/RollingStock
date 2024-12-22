@@ -251,15 +251,30 @@ export default function VehiclesPage() {
           <div className="space-y-4">
             {filteredVehicles.map((vehicle) => (
               <div key={vehicle.id} className="bg-card rounded-xl p-6 border border-border flex items-center justify-between gap-4">
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {vehicle.make} {vehicle.model} ({vehicle.year})
-                  </h3>
-                  <span className="text-foreground">{vehicle.vin}</span>
-                </div>
-                
-                <div>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full
+                <div className="flex-grow grid grid-cols-[1fr,auto,auto] gap-x-8 gap-y-2 items-center">
+                  {/* Vehicle Info */}
+                  <div className="flex flex-col">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {vehicle.make} {vehicle.model} ({vehicle.year})
+                    </h3>
+                    <span className="text-sm text-secondary">VIN: {vehicle.vin}</span>
+                  </div>
+
+                  {/* Category & Project */}
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-sm px-2 py-1 bg-secondary/10 text-secondary rounded-full">
+                      {vehicle.category || 'Uncategorized'}
+                    </span>
+                    <span className="text-sm text-secondary">
+                      {vehicle.assignments?.[0]?.project?.name 
+                        ? `Assigned to: ${vehicle.assignments[0].project.name}`
+                        : 'Unassigned'
+                      }
+                    </span>
+                  </div>
+
+                  {/* Status */}
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full whitespace-nowrap
                     ${vehicle.status === 'active' ? 'bg-success/10 text-success' :
                       vehicle.status === 'maintenance' ? 'bg-warning/10 text-warning' :
                       'bg-danger/10 text-danger'}`}>
@@ -267,6 +282,7 @@ export default function VehiclesPage() {
                   </span>
                 </div>
 
+                {/* Actions */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setEditingVehicle(vehicle)}
@@ -278,11 +294,11 @@ export default function VehiclesPage() {
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Edit
                   </button>
-                  
+
                   <button
                     onClick={() => handleDeleteVehicle(vehicle.id)}
                     className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 transition-all duration-200 group"
@@ -293,7 +309,7 @@ export default function VehiclesPage() {
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     Delete
                   </button>
