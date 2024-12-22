@@ -221,201 +221,213 @@ export default function VehicleForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="form-group">
-        <label htmlFor="vin" className="form-label">VIN</label>
-        <input
-          type="text"
-          id="vin"
-          name="vin"
-          value={formData.vin}
-          onChange={handleChange}
-          className="form-input"
-          required
-        />
-      </div>
+      <div className="space-y-3">
+        <div>
+          <div className="mb-1">VIN</div>
+          <input
+            type="text"
+            id="vin"
+            name="vin"
+            value={formData.vin}
+            onChange={handleChange}
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
 
-      <div className="form-group">
-        <label htmlFor="make" className="form-label">Make</label>
-        <input
-          type="text"
-          id="make"
-          name="make"
-          value={formData.make}
-          onChange={handleChange}
-          className="form-input"
-          required
-        />
-      </div>
+        <div>
+          <div className="mb-1">Make</div>
+          <input
+            type="text"
+            id="make"
+            name="make"
+            value={formData.make}
+            onChange={handleChange}
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
 
-      <div className="form-group">
-        <label htmlFor="model" className="form-label">Model</label>
-        <input
-          type="text"
-          id="model"
-          name="model"
-          value={formData.model}
-          onChange={handleChange}
-          className="form-input"
-          required
-        />
-      </div>
+        <div>
+          <div className="mb-1">Model</div>
+          <input
+            type="text"
+            id="model"
+            name="model"
+            value={formData.model}
+            onChange={handleChange}
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
 
-      <div className="form-group">
-        <label htmlFor="year" className="form-label">Year</label>
-        <input
-          type="number"
-          id="year"
-          name="year"
-          value={formData.year}
-          onChange={handleChange}
-          className="form-input"
-          required
-        />
-      </div>
+        <div>
+          <div className="mb-1">Year</div>
+          <input
+            type="number"
+            id="year"
+            name="year"
+            value={formData.year}
+            onChange={handleChange}
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+            required
+          />
+        </div>
 
-      <div className="form-group">
-        <label htmlFor="status" className="form-label">Status</label>
-        <select
-          id="status"
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          className="form-select"
-          required
-        >
-          <option value="active">Active</option>
-          <option value="maintenance">Maintenance</option>
-          <option value="retired">Retired</option>
-        </select>
-      </div>
-
-      {/* Project Assignment */}
-      <div>
-        <div className="mb-1">Assign to Project</div>
-        {currentProject ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 p-2 bg-background rounded-lg border border-border">
-              <span className="text-sm flex-grow">
-                Currently assigned to: <span className="font-medium">{currentProject.name}</span>
-              </span>
-            </div>
-            <div className="relative">
-              <select
-                value={selectedProject}
-                onChange={(e) => setSelectedProject(e.target.value)}
-                className="w-64 px-3 py-1.5 border border-border rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
-              >
-                <option value="">Select new project...</option>
-                {availableProjects?.map(project => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-              {selectedProject && selectedProject !== String(currentProject.id) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onAssignToProject) {
-                      onAssignToProject(Number(selectedProject))
-                    }
-                  }}
-                  className="absolute right-0 top-0 px-3 py-1.5 text-sm bg-primary text-white rounded hover:bg-primary-hover transition-colors whitespace-nowrap"
-                >
-                  Reassign to New Project
-                </button>
-              )}
-            </div>
-          </div>
-        ) : (
+        <div>
+          <div className="mb-1">Status</div>
           <select
-            value={selectedProject}
-            onChange={(e) => setSelectedProject(e.target.value)}
-            className="w-64 px-3 py-1.5 border border-border rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+            id="status"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+            required
           >
-            <option value="">Select a project...</option>
-            {availableProjects?.map(project => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
+            <option value="active">Active</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="retired">Retired</option>
           </select>
-        )}
-        {!currentProject && selectedProject && (
-          <button
-            type="button"
-            onClick={() => {
-              if (onAssignToProject) {
-                onAssignToProject(Number(selectedProject))
-              }
-            }}
-            className="mt-2 px-3 py-1.5 text-sm bg-primary text-white rounded hover:bg-primary-hover transition-colors"
-          >
-            Assign to Project
-          </button>
-        )}
-      </div>
+        </div>
 
-      {/* Images */}
-      <div>
-        <div className="mb-1">Images</div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleImageChange}
-          accept="image/*"
-          multiple
-          className="w-64"
-          disabled={isUploading}
-        />
-      </div>
-
-      {/* Image Previews */}
-      {imagePreviews.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-          {imagePreviews.map((preview, index) => (
-            <div key={index} className="relative group">
-              <img
-                src={preview.url}
-                alt={`Preview ${index + 1}`}
-                className="w-full h-40 object-cover rounded"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                <button
-                  type="button"
-                  onClick={() => handleSetPrimaryImage(index)}
-                  className={`p-2 rounded ${
-                    preview.isPrimary ? 'bg-green-500' : 'bg-blue-500'
-                  } text-white text-sm`}
+        {/* Project Assignment */}
+        <div>
+          <div className="mb-1">Assign to Project</div>
+          {currentProject ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-2 bg-background rounded-lg border border-border">
+                <span className="text-sm flex-grow">
+                  Currently assigned to: <span className="font-medium">{currentProject.name}</span>
+                </span>
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                  className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
-                  {preview.isPrimary ? 'Primary' : 'Set Primary'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(index)}
-                  className="p-2 rounded bg-red-500 text-white text-sm"
-                >
-                  Remove
-                </button>
+                  <option value="">Select new project...</option>
+                  {availableProjects?.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedProject && selectedProject !== String(currentProject.id) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onAssignToProject) {
+                        onAssignToProject(Number(selectedProject))
+                      }
+                    }}
+                    className="absolute right-0 top-0 px-3 py-1.5 text-sm text-white bg-primary hover:bg-primary-hover rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  >
+                    Reassign to New Project
+                  </button>
+                )}
               </div>
             </div>
-          ))}
+          ) : (
+            <select
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="w-64 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Select a project...</option>
+              {availableProjects?.map(project => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {!currentProject && selectedProject && (
+            <button
+              type="button"
+              onClick={() => {
+                if (onAssignToProject) {
+                  onAssignToProject(Number(selectedProject))
+                }
+              }}
+              className="mt-2 px-3 py-1.5 text-sm text-white bg-primary hover:bg-primary-hover rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+            >
+              Assign to Project
+            </button>
+          )}
         </div>
-      )}
 
-      <div className="flex gap-4 mt-6">
-        <button
-          type="submit"
-          className="form-submit"
-        >
-          {initialData ? 'Update Vehicle' : 'Add Vehicle'}
-        </button>
+        {/* Images */}
+        <div>
+          <div className="mb-1">Images</div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            accept="image/*"
+            multiple
+            className="w-64 text-sm text-gray-500 dark:text-gray-400
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-md file:border-0
+              file:text-sm file:font-medium
+              file:bg-primary file:text-white
+              file:cursor-pointer file:hover:bg-primary-hover
+              hover:file:bg-primary-hover"
+            disabled={isUploading}
+          />
+        </div>
+
+        {/* Image Previews */}
+        {imagePreviews.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            {imagePreviews.map((preview, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={preview.url}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSetPrimaryImage(index)}
+                    className={`px-2 py-1 text-xs rounded-md ${
+                      preview.isPrimary
+                        ? 'bg-primary text-white'
+                        : 'bg-white text-gray-800 hover:bg-gray-100'
+                    }`}
+                  >
+                    {preview.isPrimary ? 'Primary' : 'Set Primary'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="p-1 rounded-full bg-red-500 text-white hover:bg-red-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+        >
+          {initialData ? 'Update' : 'Create'} Vehicle
         </button>
       </div>
     </form>
