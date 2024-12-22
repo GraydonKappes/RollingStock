@@ -21,6 +21,7 @@ export default function VehiclesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [availableProjects, setAvailableProjects] = useState<Project[]>([])
   const [statusFilter, setStatusFilter] = useState<ExtendedStatusFilter>('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Load vehicles on mount
   useEffect(() => {
@@ -99,14 +100,35 @@ export default function VehiclesPage() {
   }
 
   const filteredVehicles = vehicles.filter(vehicle => {
-    switch (statusFilter) {
-      case 'unassigned-active':
-        return vehicle.status === 'active' && (!vehicle.assignments || vehicle.assignments.length === 0)
-      case 'all':
-        return true
-      default:
-        return vehicle.status === statusFilter
-    }
+    const matchesStatus = (() => {
+      switch (statusFilter) {
+        case 'unassigned-active':
+          return vehicle.status === 'active' && (!vehicle.assignments || vehicle.assignments.length === 0)
+        case 'all':
+          return true
+        default:
+          return vehicle.status === statusFilter
+      }
+    })()
+
+    if (!matchesStatus) return false
+
+    if (!searchTerm.trim()) return true
+
+    const search = searchTerm.toLowerCase().trim()
+
+    const vehicleMatches = [
+      vehicle.make,
+      vehicle.model,
+      vehicle.category,
+      vehicle.vin
+    ].some(field => field?.toLowerCase().includes(search))
+
+    const projectMatches = vehicle.assignments?.some(
+      assignment => assignment.project.name.toLowerCase().includes(search)
+    )
+
+    return vehicleMatches || projectMatches
   })
 
   if (isLoading) {
@@ -116,9 +138,36 @@ export default function VehiclesPage() {
   return (
     <div className="container mx-auto px-4">
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden animate-fade-in my-8 p-8">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Vehicles</h1>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="btn btn-primary"
+            >
+              Add Vehicle
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="relative flex-grow max-w-md">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search vehicles, projects..."
+                className="w-full px-4 py-2 pr-10 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <svg 
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as ExtendedStatusFilter)}
@@ -130,9 +179,7 @@ export default function VehiclesPage() {
               <option value="retired">Retired</option>
               <option value="unassigned-active">Unassigned Active</option>
             </select>
-          </div>
-          
-          <div className="flex items-center gap-4">
+
             <div className="flex rounded-lg border border-border overflow-hidden">
               <button 
                 className={`px-4 py-2 text-sm font-medium transition-colors
@@ -155,12 +202,6 @@ export default function VehiclesPage() {
                 List View
               </button>
             </div>
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="btn btn-primary"
-            >
-              Add Vehicle
-            </button>
           </div>
         </div>
 
