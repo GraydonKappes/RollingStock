@@ -107,10 +107,12 @@ export default function VehicleForm({
         }
       }
       
-      onCancel() // Close the form after successful submission
+      // Return true to indicate successful completion of all operations
+      return true
     } catch (error) {
       console.error('Failed to submit vehicle:', error)
       alert('Failed to save vehicle')
+      return false
     }
   }
 

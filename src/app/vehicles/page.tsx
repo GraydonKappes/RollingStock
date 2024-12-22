@@ -57,7 +57,7 @@ export default function VehiclesPage() {
       const id = await createVehicle(data)
       await loadVehicles()
       setIsFormOpen(false)
-      return id // Return the ID for image handling
+      return id
     } catch (error) {
       console.error('Failed to create vehicle:', error)
       throw error
@@ -70,7 +70,7 @@ export default function VehiclesPage() {
       const id = await updateVehicle(editingVehicle.id, data)
       await loadVehicles()
       setEditingVehicle(null)
-      return id // Return the ID for image handling
+      return id
     } catch (error) {
       console.error('Failed to update vehicle:', error)
       throw error
@@ -329,7 +329,10 @@ export default function VehiclesPage() {
             </h2>
             <VehicleForm
               initialData={editingVehicle || undefined}
-              onSubmit={editingVehicle ? handleUpdateVehicle : handleCreateVehicle}
+              onSubmit={async (data) => {
+                const id = await (editingVehicle ? handleUpdateVehicle(data) : handleCreateVehicle(data))
+                return id
+              }}
               onCancel={() => {
                 setIsFormOpen(false)
                 setEditingVehicle(null)
@@ -337,7 +340,10 @@ export default function VehiclesPage() {
               availableProjects={availableProjects}
               onAssignToProject={
                 editingVehicle 
-                  ? (projectId) => handleAssignToProject(editingVehicle.id, projectId)
+                  ? async (projectId) => {
+                      await handleAssignToProject(editingVehicle.id, projectId)
+                      await loadVehicles()
+                    }
                   : undefined
               }
             />
